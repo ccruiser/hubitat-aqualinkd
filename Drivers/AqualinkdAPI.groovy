@@ -147,14 +147,13 @@ def DoSomething(){
                     setAlDate = resp.data."${ AqualinkDDate()  }"
                     setAlTime = resp.data."${ AqualinkDTime() }"
 
-
+                    //Add to Device 
                     Logging( "AqualinkD Daemon Status set to "+setAlDaemonVer, 2 )
                     Logging( "AqualinkD date set to "+setAlDate, 2 )
                     Logging( "AqualinkD time set to "+setAlTime, 2 )
                     Logging( "AqualinkD Hardware"+setAlHwrVer, 2 )
                     ProcessEvent( "AqualinkD Version", setAlDaemonVer )
                     ProcessState( "AqualinkD Version", setAlDaemonVer )
-                    ProcessState( "AqualinkD Hardware", setAlTime )
                     ProcessState( "AqualinkD Date", setAlDate )
                     ProcessState( "AqualinkD Time", setAlTime )
                     ProcessState( "AqualinkD Hardware", setAlHwrVer )
