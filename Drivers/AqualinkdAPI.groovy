@@ -139,7 +139,8 @@ metadata{
 // Just a command to be put fixes or other oddities during development
 def DoSomething(){
     Logging( "Using Current Host ${ AqualinkdURL }", 2 )
-     httpGet( uri: "http://192.168.11.121/api/status", contentType: "application/json" ){ resp ->
+     httpGet( uri: "http://192.168.11.121/api/status", 
+              contentType: "application/json" )          { resp ->
         switch( resp.status ){
             case 200:
                 if( resp.data."${ AqualinkDVerName() }" ){
@@ -279,7 +280,7 @@ def updated(){
     Logging( "Refresh rate: ${ RefreshRate }", 4 )
 
     // Attempt to call status API
-    //CallStatusAPI()
+    CallStatusAPI()
      
     //RefreshAllClients()
     //RefreshUnifiDevices()
@@ -327,48 +328,52 @@ def DailyCheck(){
 }
 
 //Call Status API for AqualinkD
+def setCookie( resp ){
+    def CookieRsp
+    resp.getHeaders().each{
+    if( ( it.value.split( '=' )[ 0 ].toString() == "aqualink" ) || 
+        ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) ){
+            CookieRsp = resp.getHeaders().'Set-Cookie'
+            ProcessState( "Cookie", Cookie )
+    }
+    else {
+            def CSRF
+            CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
+            ProcessState( "CSRF", CSRF )
+            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
+            //    CSRF = it as String
+            //    if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" ){
+            //       ProcessState( "CSRF", it.value )
+            //    }
+            //} else {
+            //    if( it.value.split( '=' )[ 0 ].toString() == "csrf_token" ){
+            //        CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
+            //        ProcessState( "CSRF", CSRF )
+            //    }
+        }
+}
+
+//Call Status API for AqualinkD
 def CallStatusAPI(){
     def Params
+    Params = GenerateAPIParams("status")
+    /*
     Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
                                 ignoreSSLIssues: true, 
                                 requestContentType: "application/json", 
                                 contentType: "application/json", 
                                 body: "" ]        
+    */
     Logging( "Status Params: ${ Params }", 4 )
-    asynchttpPost( "ReceiveLogin", Params )
+    asynchttpPost( "CallStatusAPI", Params )
     try{
         httpPost( Params ){ resp ->
 	        switch( resp.getStatus() ){
 		        case 200:
-                    Logging( "Login response = ${ resp.data }", 4 )
+                    Logging( "status response = ${ resp.data }", 4 )
                     ProcessEvent( "Status", "AqualinkD status successful" )
                     ProcessEvent( "Last Status", new Date() )
-                    def Cookie
-                    resp.getHeaders().each{
-                        if( ( it.value.split( '=' )[ 0 ].toString() == "unifises" ) || ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) ){
-                            Cookie = resp.getHeaders().'Set-Cookie'
-                            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                            //    Cookie = Cookie.split( ";" )[ 0 ] + ";"
-                            //} else {
-                            //    Cookie = Cookie.split( ";" )[ 0 ]
-                            //}
-                            ProcessState( "Cookie", Cookie )
-                        } else {
-                            def CSRF
-                            CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
-                            ProcessState( "CSRF", CSRF )
-                            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                            //    CSRF = it as String
-                            //    if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" ){
-                            //       ProcessState( "CSRF", it.value )
-                            //    }
-                            //} else {
-                            //    if( it.value.split( '=' )[ 0 ].toString() == "csrf_token" ){
-                            //        CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
-                            //        ProcessState( "CSRF", CSRF )
-                            //    }
-                        }
-                    }
+                    setCookie(resp)
                     // Resetting 1 minute refresh rate
                     def Second = ( new Date().format( "s" ) as int )
                     Second = ( (Second + 5) % 60 )
@@ -473,8 +478,6 @@ def RefreshAqualinkGeneralData(){
 }
 
 
-
-
 // Configure child device settings based on Preferences
 def SendChildSettings( String DNI, String ChildID, String Value ){
     def Attempt = "api/s/${ state.Site }/rest/device/"
@@ -489,7 +492,8 @@ def GenerateAPIParams( String Path, String Data = null ){
     //                  requestContentType: "application/json", 
     //                  contentType: "application/json", 
     //                  headers: [ Host: "${ AqualinkdURL }", 
-    //                  Accept: "*/*", Cookie: "${ state.Cookie }" ], 
+    //                             Accept: "*/*", 
+    //                             Cookie: "${ state.Cookie }" ], 
     //                  data:"${ Data }" ]
 
     if ( Data != null ) {
