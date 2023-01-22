@@ -141,22 +141,33 @@ def DoSomething(){
         switch( resp.status ){
             case 200:
                 if( resp.data."${ AqualinkDVerName() }" ){
-                    StatusVerDaemonAqualink = resp.data."${ AqualinkDVerName() }"
-                    Logging( "AqualinkD Status set to "+StatusVerDaemonAqualink, 2 )
-                    ProcessEvent( "AqualinkD Version", StatusVerDaemonAqualink )
-                    ProcessState( "AqualinkD Version", StatusVerDaemonAqualink )
+                    // Set General items
+                    setAlDaemonVer = resp.data."${ AqualinkDVerName() }"
+                    setAlHwrVer = resp.data."${ AqualinkDHrdwVersion() }"
+                    setAlDate = resp.data."${ AqualinkDDate()  }"
+                    setAlTime = resp.data."${ AqualinkDTime() }"
 
-                    //Test Setting AquaLinkD Values
-                     def setAlDate = resp.data."${ AqualinkDDate()  }"
-                     def setAlTime = resp.data."${ AqualinkDTime() }"
-                     def setAlTempUnit = resp.data."${ AqualinkDTempUnits() }"
-                     def setFrzPrtStatus = resp.data."${ AqualinkDFrzProtectStatus() }"
 
-                     AqualinkDFrzProtectStatus 
+                    Logging( "AqualinkD Daemon Status set to "+setAlDaemonVer, 2 )
                     Logging( "AqualinkD date set to "+setAlDate, 2 )
                     Logging( "AqualinkD time set to "+setAlTime, 2 )
+                    Logging( "AqualinkD Hardware"+setAlHwrVer, 2 )
+                    ProcessEvent( "AqualinkD Version", setAlDaemonVer )
+                    ProcessState( "AqualinkD Version", setAlDaemonVer )
+                    ProcessState( "AqualinkD Hardware", setAlTime )
+                    ProcessState( "AqualinkD Date", setAlDate )
+                    ProcessState( "AqualinkD Time", setAlTime )
+                    ProcessState( "AqualinkD Hardware", setAlHwrVer )
+
+
+                    //Set Pool Specific Items
+                     setAlTempUnit = resp.data."${ AqualinkDTempUnits() }"
+                     setFrzPrtStatus = resp.data."${ AqualinkDFrzProtectStatus() }" 
                     Logging( "AqualinkD temp unit set to "+setAlTempUnit, 2 )
                     Logging( "AqualinkD freeze prtct status set to "+setFrzPrtStatus, 2 )
+
+
+
 
 
  
