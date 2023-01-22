@@ -31,9 +31,52 @@ def DriverName(){
     return "AqualinkdAPI"
 }
 
+//this is a lazy attemot to ensure the 200 response is correct
+def AqualinkDVerName() {
+    return "aqualinkd_version"
+}
+
 // Returns the driver version
 def DriverVersion(){
     return "0.1.00"
+}
+
+//AqualinkD Static JSON items
+def AqualinkDDate() {
+    return "date"
+}
+def AqualinkDTime() {
+    return "time"
+}
+def AqualinkDTempUnits() {
+    return "temp_units"
+}
+def AqualinkDPoolHtrSetPnt() {
+    return "pool_htr_set_pnt"
+}
+def AqualinkDSpaHtrSetPnt() {
+    return "spa_htr_set_pnt"
+}
+def AqualinkDFrzProtectSetPnt() {
+    return "frz_protect_set_pnt"
+}
+def AqualinkDFrzProtectStatus() {
+    return "Freeze_Protect"
+}
+def AqualinkDTempAir() {
+    return "air_temp"
+}
+def AqualinkDTempPool() {
+    return "pool_temp"
+}
+def AqualinkDTempSpa() {
+    return "spa_temp"
+}
+def AqualinkDBattery() {
+    return "battery"
+}
+def AqualinkDHrdwVersion() {
+    return "version"
 }
 
 // Driver Metadata
@@ -47,71 +90,17 @@ metadata{
         // Commands
         command "DoSomething" // Does something for development/testing purposes, should be commented before publishing
         command "LogCallStatusAPI" // Logs in to the controller to get a cookie for the session
-        //command "CurrentStats" // Statistics of the site including health information
-        //command "CheckAlarms" // Checks for any alarms not archived
-        //command "ArchiveAlarms" // Archives all alarms
-        //command "StartSpeedtest" // Runs a speed test, but does not provide results in response, uncomment if you want to use it
-        /*
-        command "PresenceCheck", [
-            [ name: "MAC", type: "STRING", description: "Enter a single MAC Address to check" ]
-        ] // Check on clients for Presense Sensing
-        command "MACExists", [
-            [ name: "MAC", type: "STRING", description: "Enter a single MAC Address to check" ]
-        ] // Check on clients for Presense Sensing
-        command "BlockMAC", [
-            [ name: "MAC", type: "STRING", description: "Enter MAC Address to block from a Unifi AP" ]
-        ] // Blocks a MAC address
-        command "UnblockMAC", [
-            [ name: "MAC", type: "STRING", description: "Enter MAC Address to unblock from a Unifi AP" ]
-        ] // Unblocks a MAC address
-        command "Ping", [
-            [ name: "IP", type: "STRING", description: "Enter IP Address to ping" ]
-        ] // Pings an IP Address from the Hubitat NOT the Unifi
-        command "PowerCyclePort", [
-            [ name: "MAC", type: "STRING", description: "Enter MAC Address of PoE Switch" ],
-            [ name: "Port", type: "INTEGER", description: "Enter PoE Port # (ex: 1, 2...)" ]
-        ] // Power cycles the PoE for a specific port of a switch
-        command "Reboot", [
-            [ name: "Confirmation", type: "STRING", description: "Type the word Reboot to confirm intent to reboot the controller." ]
-        ] // Submits a reboot command to the controller.
-        command "PowerDown", [
-            [ name: "Confirmation", type: "STRING", description: "Type the word PowerDown to confirm intent to power down the controller." ]
-        ] 
-        */
    
 		// Attributes for the driver itself
 		attribute "Driver Name", "string" // Identifies the driver being used for update purposes
 		attribute "Driver Version", "string" // Handles version for driver
         attribute "Driver Status", "string" // Handles version notices for driver
         // Attributes for the AqualinkD device
-        attribute "StatusDateAqualink", "string" // Holds the value of the status date
-        attribute "StatusTimeAqualink", "string" // Holds the value of the status time
-        attribute "StatusVerCntlAqualink", "string" // Holds the value of the version controller 
-        attribute "StatusVerDaemonAqualink", "string" // Holds the value of the version of the daemon code
-        /*
-        attribute "Manual Presence Result", "string" // Lists result for MAC address when user manually checks with PresenceCheck command
-        attribute "MAC Exists Result", "string" // Lists result for MAC address when user manually checks with MACExists command
-        attribute "Total Clients", "number" // Total number of devices that have been seen by the UDMP
-        attribute "Online Clients", "number" // Number of currently online devices
-        attribute "Unifi Devices", "number" // Number of Unifi devices reported
-        attribute "Last Login", "string" // Time that the last login was performed
-        attribute "Last Refresh", "string" // Time that the last refresh was performed
-        attribute "Last Presence Check", "string" // Time that the last presence check was performed
-        attribute "wlan-Health", "string" // Health of the wlan (Wireless network)
-        attribute "wan-Health", "string" // Health of the wan (ISP)
-        attribute "www-Health", "string" // Health of the www (Internet)
-        attribute "lan-Health", "string" // Health of the lan (Wired Network)
-        attribute "vpn-Health", "string" // Health of the vpn (VPN may list unknown if no VPN is configured)
-        attribute "CPU", "number" // % of CPU usage
-        attribute "Memory", "number" // % of memory usage
-        attribute "Uptime", "string" // String showing days and hours of uptime
-        attribute "Alarms", "list" // List of alarms that have not been archived
-        attribute "Status", "string" // Meant to show success/failure of commands performed
-        attribute "Upload Speed", "string" // 
-        attribute "Download Speed", "string" // 
-        attribute "Latency", "string" // 
-        attribute "Ping Result", "string" // Holds the result of a Ping attempt, feature in Hubitat as of 2.2.7
-        */
+        attribute "AqualinkD Date", "string" // Holds the value of the status date
+        attribute "AqualinkD Time", "string" // Holds the value of the status time
+        attribute "AqualinkD Hardware", "string" // Holds the value of the version controller 
+        attribute "AqualinkD Version", "string" // Holds the value of the version of the daemon code
+       
     }
 	preferences{
 		section{
@@ -120,22 +109,22 @@ metadata{
     			input( type: "enum", name: "LogType", title: "<b>Enable Logging?</b>", required: false, multiple: false, options: [ "None", "Info", "Debug", "Trace" ], defaultValue: "Info" )
                 input( type: "string", name: "AqualinkdURL", title: "<font color='FF0000'><b>AqualinkD IP/Hostname</b></font>", required: true )
                 input( type: "string", name: "AqualinkdPort", title: "<font color='FF0000'><b>AqualinkD Port #</b></font>", defaultValue: "80", required: false )
-
+                input( type: "string", name: "AqualinkdDevice1", title: "<font color='FF0000'><b>Include the name of the first device</b></font>", defaultValue: "Filter_Pump", required: false )
+                input( type: "string", name: "AqualinkdDevice2", title: "<font color='FF0000'><b>Include the name of the second device</b></font>", defaultValue: "Spa_Mode", required: false )
+                input( type: "string", name: "AqualinkdDevice3", title: "<font color='FF0000'><b>Include the name of the third device</b></font>", defaultValue: "Aux_1", required: false )
+                input( type: "string", name: "AqualinkdDevice4", title: "<font color='FF0000'><b>Include the name of the fourth device</b></font>", defaultValue: "Aux_2", required: false )
+                input( type: "string", name: "AqualinkdDevice5", title: "<font color='FF0000'><b>Include the name of the fifth device</b></font>", defaultValue: "Aux_3", required: false )
+                input( type: "string", name: "AqualinkdDevice6", title: "<font color='FF0000'><b>Include the name of the sixth device</b></font>", defaultValue: "Pool_Heater", required: false )
+                input( type: "string", name: "AqualinkdDevice7", title: "<font color='FF0000'><b>Include the name of the seventh device</b></font>", defaultValue: "Spa_Heater", required: false )
+                //input( type: "string", name: "AqualinkdDevice8", title: "<font color='FF0000'><b>Include the name of the eighth device</b></font>", defaultValue: "Aux_8", required: false )
 				/*
                 input( type: "string", name: "Username", title: "<font color='FF0000'><b>Username</b></font>", required: true )
 				input( type: "password", name: "Password", title: "<font color='FF0000'><b>Password</b></font>", required: true )
-                input( type: "enum", name: "Controller", title: "<font color='FF0000'><b>Unifi Controller Type</b></font>", required: true, multiple: false, options: [ "Unifi Dream Machine (inc Pro)", "Other Unifi Controllers" ], defaultValue: "Unifi Dream Machine (inc Pro)" )
-                input( type: "string", name: "MACPresence", title: "<b>MAC Address(s) to Presence Check (separate with ; and must be 10 or less addresses)</b>", required: false )
                 */
                 /*
-                if( Controller == "Other Unifi Controllers" ){
-				    input( type: "string", name: "AqualinkdPort", title: "<font color='FF0000'><b>Controller Port #</b></font>", defaultValue: "8443", required: true )
-                }
-                input( type: "string", name: "SiteOverride", title: "<b>Override Default Site</b>", defaultValue: null, required: false )
-                input( type: "bool", name: "ShowAlarms", title: "<b>Show Network Alarm Data?</b>", defaultValue: true )
                 input( type: "bool", name: "AdvancedCommands", title: "<b>Enable Advanced Commands?</b>", description: "Allows controller Reboot and PowerDown commands to run.", defaultValue: false )
-                input( type: "bool", name: "UnifiChildren", title: "<b>Show Unifi Devices as Children?</b>", required: true, defaultValue: false )
-                input( type: "bool", name: "EnableClientCheck", title: "<b>Enable Hourly Client Checks</b>", description: "Creates ClientCheck child and performs hourly checks.", defaultValue: false )
+                input( type: "bool", name: "UnifiChildren", title: "<b>Show AquaLink Devices as Children?</b>", required: true, defaultValue: false )
+                input( type: "bool", name: "EnableClientCheck", title: "<b>Enable Hourly Polling Checks</b>", description: "Creates ClientCheck child and performs hourly checks.", defaultValue: false )
                 */
                 input( type: "bool", name: "ShowAllPreferences", title: "<b>Show All Preferences?</b>", defaultValue: true )
             } else {
@@ -148,6 +137,42 @@ metadata{
 // Just a command to be put fixes or other oddities during development
 def DoSomething(){
     Logging( "Using Current Host ${ AqualinkdURL }", 2 )
+     httpGet( uri: "http://192.168.11.121/api/status", contentType: "application/json" ){ resp ->
+        switch( resp.status ){
+            case 200:
+                if( resp.data."${ AqualinkDVerName() }" ){
+                    StatusVerDaemonAqualink = resp.data."${ AqualinkDVerName() }"
+                    Logging( "AqualinkD Status set to "+StatusVerDaemonAqualink, 2 )
+                    ProcessEvent( "AqualinkD Version", StatusVerDaemonAqualink )
+                    ProcessState( "AqualinkD Version", StatusVerDaemonAqualink )
+
+                    //Test Setting AquaLinkD Values
+                     def setAlDate = resp.data."${ AqualinkDDate()  }"
+                     def setAlTime = resp.data."${ AqualinkDTime() }"
+                     def setAlTempUnit = resp.data."${ AqualinkDTempUnits() }"
+                     def setFrzPrtStatus = resp.data."${ AqualinkDFrzProtectStatus() }"
+
+                     AqualinkDFrzProtectStatus 
+                    Logging( "AqualinkD date set to "+setAlDate, 2 )
+                    Logging( "AqualinkD time set to "+setAlTime, 2 )
+                    Logging( "AqualinkD temp unit set to "+setAlTempUnit, 2 )
+                    Logging( "AqualinkD freeze prtct status set to "+AqualinkDFrzProtectStatus, 2 )
+
+
+ 
+
+                   
+                } else {
+                    Logging( "${ AqualinkDVerName() } was not found from host", 2 )
+                    ProcessEvent( "Aqualink Status", "${ AqualinkDVerName() } was not found" )
+                }
+                break
+            default:
+                Logging( "Unable to check aqualinkd for ${ AqualinkDVerName() } status.", 2 )
+                break
+        }
+    }
+
 }
 
 // updated is called whenever device parameters are saved
@@ -159,17 +184,6 @@ def updated(){
     if( LogType == null ){
         LogType = "Info"
     }
-    /*
-    if( Controller == null ){
-        Controller = "Unifi Dream Machine (inc Pro)"
-    }
-    
-    if( AqualinkdPort == null ){
-        if( Controller == "Other Unifi Controllers" ){
-            AqualinkdPort = "8443"
-        }
-    }
-    */
     
     // Remove child devices (except Presence and ClientCheck) if previously created and disabled
     /*
@@ -314,7 +328,6 @@ def DailyCheck(){
 
 //Call Status API for AqualinkD
 def CallStatusAPI(){
-
     def Params
     Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
                                 ignoreSSLIssues: true, 
@@ -331,7 +344,6 @@ def CallStatusAPI(){
                     ProcessEvent( "Status", "AqualinkD status successful" )
                     ProcessEvent( "Last Status", new Date() )
                     def Cookie
-                    /*
                     resp.getHeaders().each{
                         if( ( it.value.split( '=' )[ 0 ].toString() == "unifises" ) || ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) ){
                             Cookie = resp.getHeaders().'Set-Cookie'
@@ -340,44 +352,29 @@ def CallStatusAPI(){
                             //} else {
                             //    Cookie = Cookie.split( ";" )[ 0 ]
                             //}
-                            
                             ProcessState( "Cookie", Cookie )
                         } else {
                             def CSRF
-                            if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                                CSRF = it as String
-                                if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" ){
-                                   ProcessState( "CSRF", it.value )
-                                }
-                            } else {
-                                if( it.value.split( '=' )[ 0 ].toString() == "csrf_token" ){
-                                    CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
-                                    ProcessState( "CSRF", CSRF )
-                                }
-                            }
+                            CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
+                            ProcessState( "CSRF", CSRF )
+                            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
+                            //    CSRF = it as String
+                            //    if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" ){
+                            //       ProcessState( "CSRF", it.value )
+                            //    }
+                            //} else {
+                            //    if( it.value.split( '=' )[ 0 ].toString() == "csrf_token" ){
+                            //        CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
+                            //        ProcessState( "CSRF", CSRF )
+                            //    }
                         }
                     }
-                    */
-                    // Resetting Presence check and 1 minute refresh rate
-                    /*
+                    // Resetting 1 minute refresh rate
                     def Second = ( new Date().format( "s" ) as int )
                     Second = ( (Second + 5) % 60 )
                     if( RefreshRate == "1 minute" ){ // Reschedule the refresh check if it is every minute
                         schedule( "${ Second } * * ? * *", "refresh" )
                     }
-                    // Setup scheduling for presence checking if any MAC address is entered
-                    if( MACPresence != null ){
-                        Logging( "MACPresense List size = ${ MACPresence.split( ";").size() }", 4 )
-                        if( MACPresence.split( ";").size() <= 5 ){
-                            schedule( "${ Second } * * * * ?", PresenceCheck )
-                        } else if( MACPresence.split( ";").size() <= 10 ){
-                            schedule( "${ Second } 0/2 * * * ?", PresenceCheck )
-                        } else {
-                            ProcessEvent( "Status", "Must be 10 or less MAC addresses for Presence Checking.", 5 )
-                            Logging( "Too many MAC addresses to check for presence regularly.", 5 )
-                        }
-                    }
-                    */
 			        break
                 case 408:
                     Logging( "Request Timeout to host: "+AqualinkdURL+" on port "+AqualinkdPort, 3 )
@@ -390,7 +387,6 @@ def CallStatusAPI(){
     } catch( Exception e ){
         Logging( "Exception when performing Login: ${ e }", 5 )
     }
-    */
 }
 
 // Check if polling OK is a simple set of tests to make sure all needed information is available before polling
@@ -1587,16 +1583,16 @@ def addChild( String DNI, String ChildType ){
         } else {
             addChildDevice( "UnifiNetworkChild-Presence", DNI, [ name: "${ DNI }" ] )
         }
+        */
     }
     catch( Exception e ){
         def Temp = e as String
         if( Temp.contains( "not found" ) ){
-            Logging( "UnifiNetworkChild-${ ChildType } driver is not loaded for ${ DNI }.", 5 )
+            Logging( "AqualinkDChild-${ ChildType } driver is not loaded for ${ DNI }.", 5 )
         } else {
             Logging( "addChild error, likely ${ DNI } already exists: ${ Temp }", 5 )
         }
     }
-    */
 }
 
 // Handles whether logging is enabled and thus what to put there.
