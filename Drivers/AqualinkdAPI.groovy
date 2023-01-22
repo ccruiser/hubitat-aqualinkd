@@ -91,7 +91,7 @@ metadata{
         
         // Commands
         command "DoSomething" // Does something for development/testing purposes, should be commented before publishing
-        command "LogCallStatusAPI" // Logs in to the controller to get a cookie for the session
+        command "LogCallStatusAPI" // Status API Call in to the controller to get a cookie for the session
    
 		// Attributes for the driver itself
 		attribute "Driver Name", "string" // Identifies the driver being used for update purposes
@@ -329,28 +329,29 @@ def DailyCheck(){
 
 //Call Status API for AqualinkD
 def setCookie( resp ){
-    def CookieRsp
-    resp.getHeaders().each{
-    if( ( it.value.split( '=' )[ 0 ].toString() == "aqualink" ) || 
-        ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) ){
-            CookieRsp = resp.getHeaders().'Set-Cookie'
-            ProcessState( "Cookie", Cookie )
-    }
-    else {
-            def CSRF
-            CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
-            ProcessState( "CSRF", CSRF )
-            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
-            //    CSRF = it as String
-            //    if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" ){
-            //       ProcessState( "CSRF", it.value )
-            //    }
-            //} else {
-            //    if( it.value.split( '=' )[ 0 ].toString() == "csrf_token" ){
-            //        CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
-            //        ProcessState( "CSRF", CSRF )
-            //    }
+    def Cookie
+    try{
+        resp.getHeaders().each{
+            //if( ( it.value.split( '=' )[ 0 ].toString() == "aqualink" ) || ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) )
+            if (it.value.split( '=' )[ 0 ].toString() == "TOKEN" )
+            {
+                Cookie = resp.getHeaders().'Set-Cookie'
+                ProcessState( "Cookie", Cookie )
+            }
+            else{
+                Logging( "no cookie found in  response ${ it.value }", 4 )
+                def CSRF
+                if( CSRF.split( ':' )[ 0 ] == "X-CSRF-Token" )
+                {
+                    CSRF = it.value.split( ';' )[ 0 ].split( '=' )[ 1 ]
+                    ProcessState( "CSRF", CSRF )
+                }
+
+            }
         }
+    } catch( Exception e ){
+        Logging( "Exception when performing setting cookie: ${ e }", 5 )
+    }
 }
 
 //Call Status API for AqualinkD
@@ -390,7 +391,7 @@ def CallStatusAPI(){
 	        }
         }
     } catch( Exception e ){
-        Logging( "Exception when performing Login: ${ e }", 5 )
+        Logging( "Exception when requesting aqualink status invocation: ${ e }", 5 )
     }
 }
 
