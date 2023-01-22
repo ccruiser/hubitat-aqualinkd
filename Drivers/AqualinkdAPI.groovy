@@ -510,19 +510,42 @@ def SendChildSettings( String DNI, String ChildID, String Value ){
 // Generate Network Params assembles the parameters to be sent to the controller rather than repeat so much of it
 def GenerateNetworkParams( String Path, String Data = null ){
 	def Params
-	if( Controller == "Unifi Dream Machine (inc Pro)" ){
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
-        }
-	} else {
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
-        }
-	}
+    //TODO :: Future data null validation options
+
+
+    if ( Data != null ) {
+        /*
+        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                ignoreSSLIssues: true, 
+                                requestContentType: "application/json", 
+                                contentType: "application/json",
+                                , data:"${ Data }"  
+                                body: "" ]        
+        */
+        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                contentType: "application/json", 
+                                headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], 
+                                data:"${ Data }" ]       
+    }
+    else {
+        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                contentType: "application/json"
+
+    }
+	//if( Controller == "Unifi Dream Machine (inc Pro)" ){
+    //    if( Data != null ){
+    //        Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
+    //    } else {
+    //        Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
+     //   }
+	//} else {
+     //   if( Data != null ){
+     //       Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
+      //  } else {
+      //      Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
+      //  }
+	//}
+
     //Logging( "Parameters = ${ Params }", 4 )
 	return Params
 }
@@ -616,6 +639,9 @@ def ReceiveData( resp, data ){
             def Json = parseJson( resp.data )
             ProcessEvent( "Status", "${ data.Method } successful." )
             switch( data.Method ){
+                case "RefreshAqualinkGeneralData":
+                    Logging( "Refreshing Aqualink general status data", 4 )
+                    break
                 /*
                 case "CheckAccountStatus":
                     def SiteNumber = 0
@@ -859,138 +885,12 @@ def ReceiveData( resp, data ){
                     PostEventToChild( "ClientCheck", "Client ${ data.ClientNumber }", TempMap )
                     break
                 case "PresenceCheck":
-                    ProcessEvent( "Last Presence Check", new Date() )
-                    def ClientMAC = ""
-                    def ConnectedMAC = ""
-                    if( data.Manual ){
-                        Json.data.each(){
-                            if( it.mac != null ){
-                                ClientMAC = it.mac
-                                ProcessEvent( "Manual Presence Result", "${ ClientMAC } is present as of ${ ConvertEpochToDate( "${ it.last_seen }" ) }" )
-                            }
-							if( MACPresence != null ){
-                                if( MACPresence.toLowerCase().indexOf( "${ ClientMAC }" ) >= 0 ){
-                                    PostEventToChild( "Presence ${ ClientMAC }", "presence", "present" )
-                                    if( getChildDevice( "Presence ${ ClientMAC }" ).label == null ){
-                                        getChildDevice( "Presence ${ ClientMAC }" ).label = it.name
-                                    }
-                                    PostEventToChild( "Presence ${ ClientMAC }", "Last Seen", ConvertEpochToDate( "${ it.last_seen }" ) )
-                                    if( it.is_wired ){
-                                        ConnectedMAC = it.sw_mac
-                                    } else {
-                                        ConnectedMAC = it.ap_mac
-                                    }
-                                    PostEventToChild( "Presence ${ ClientMAC }", "Connected To MAC", ConnectedMAC )
-                                    getChildDevices().each{
-                                        if( it.deviceNetworkId.indexOf( "${ ConnectedMAC }" ) != -1 ){
-                                            PostEventToChild( "Presence ${ ClientMAC }", "Connected To Name", it.displayName )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        Json.data.each(){
-                            ClientMAC = it.mac
-                            if( MACPresence.toLowerCase().indexOf( "${ ClientMAC }" ) >= 0 ){
-                                PostEventToChild( "Presence ${ ClientMAC }", "presence", "present" )
-                                if( getChildDevice( "Presence ${ ClientMAC }" ).label == null ){
-                                    getChildDevice( "Presence ${ ClientMAC }" ).label = it.name
-                                }
-                                PostEventToChild( "Presence ${ ClientMAC }", "Last Seen", ConvertEpochToDate( "${ it.last_seen }" ) )
-                                if( it.is_wired ){
-                                    ConnectedMAC = it.sw_mac
-                                } else {
-                                    ConnectedMAC = it.ap_mac
-                                }
-                                PostEventToChild( "Presence ${ ClientMAC }", "Connected To MAC", ConnectedMAC )
-                                getChildDevices().each{
-                                    if( it.deviceNetworkId.indexOf( "${ ConnectedMAC }" ) != -1 ){
-                                        PostEventToChild( "Presence ${ ClientMAC }", "Connected To Name", it.displayName )
-                                    }
-                                }
-                            }
-                        }  
-                    }
-                    break
                 case "MACExists":
                     Json.data.each(){
                         ProcessEvent( "MAC Exists Result", "${ it.mac } exists as of ${ ConvertEpochToDate( "${ it.last_seen }" ) }" )
                     }
                     break
                 case "CurrentStats":
-                    def TempOnline = 0
-                    def TempUnifiDevices = 0
-                    if( state.Site == null ){
-                        ProcessEvent( "Site", "${ Json.data[ 0 ].name }" )
-                    }
-                    Json.data.each(){
-                        def TempSite = "${ it.name }"
-                        if( it.health != null ){
-                            it.health.each(){
-                                if( TempSite == state.Site ){
-                                    ProcessEvent( "${ it.subsystem }-Health", "${ it.status }" )
-                                }
-                                if( it.num_adopted != null ){
-                                    TempUnifiDevices = TempUnifiDevices + ( it.num_adopted ) as int
-                                }
-                                if( it.num_user != null ){
-                                    TempOnline = TempOnline + ( it.num_user ) as int
-                                }
-                                ProcessState( "${ TempSite }-${ it.subsystem }-Health", "${ it.status }" )
-                                if( it.subsystem != null ){
-                                    switch( it.subsystem ){
-                                        case "wan":
-                                            if( it."gw_system-stats" != null ){
-                                                if( it."gw_system-stats".cpu != null ){
-                                                    ProcessEvent( "CPU", it."gw_system-stats".cpu, "%" )
-                                                }
-                                                if( it."gw_system-stats".mem != null ){
-                                                    ProcessEvent( "Memory", it."gw_system-stats".mem, "%" )
-                                                }
-                                                if( it."gw_system-stats".uptime != null ){
-                                                    def TempSeconds = it."gw_system-stats".uptime as int
-                                                    def TempMinutes = ( TempSeconds / 60 ) as int
-                                                    def TempHours = ( TempMinutes / 60 ) as int
-                                                    def TempDays = ( TempHours / 24 ) as int
-                                                    TempMinutes = ( TempMinutes % 60 )
-                                                    TempHours = ( TempHours % 24 )
-                                                    ProcessEvent( "Uptime", "${ TempDays } days ${ TempHours } hours ${ TempMinutes } minutes" )
-                                                }
-                                            }
-                                            break
-                                        case "wlan":
-                                            break
-                                        case "lan":
-                                            break
-                                        case "www":
-                                            if( it.xput_up != null ){
-                                                ProcessEvent( "Upload Speed", "${ it.xput_up }Mbps" )
-                                            }
-                                            if( it.xput_down != null ){
-                                                ProcessEvent( "Download Speed", "${ it.xput_down }Mbps" )
-                                            }
-                                            if( it.latency != null ){
-                                                ProcessEvent( "Latency", "${ it.latency }" )
-                                            }
-                                            break
-                                        case "vpn":
-                                            break
-                                        default:
-                                            Logging( "Unhandled SubSystem ${ it.subsystem } reported", 3 )
-                                            break
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    ProcessEvent( "Online Clients", TempOnline )
-                    if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                        ProcessEvent( "Unifi Devices", ( TempUnifiDevices - 1 ) )
-                    } else {
-                        ProcessEvent( "Unifi Devices", TempUnifiDevices )
-                    }
-                    break
                 case "CheckAlarms":
                     if( Json.data != null ){
                         def AlarmNumber = 1
@@ -1008,86 +908,6 @@ def ReceiveData( resp, data ){
                     }
                     break
                 case "PowerOutlet":
-                    if( UnifiChildren ){
-                        if( Json.data != null ){
-                            if( Json.data[ 0 ] != null ){
-                                if( Json.data[ 0 ].size() > 0 ){
-                                    //ProcessData( "${ data.DNI }", Json.data[ 0 ] )
-                                    if( Json.data[ 0 ].outlet_overrides != null ){
-                                        if( Json.data[ 0 ].outlet_overrides.size() > 0 ){
-                                            PostStateToChild( "${ data.DNI }", "Outlet Overrides",  Json.data[ 0 ].outlet_overrides )
-                                            switch( getChildDevice( "${ data.DNI }" ).ReturnState( "Model" ) ){
-												case "UP1":
-													if( Json.data[ 0 ].outlet_overrides.relay_state ){
-														PostEventToChild( "${ data.DNI }", "switch", "on" )
-													} else {
-														PostEventToChild( "${ data.DNI }", "switch", "off" )
-													}
-													break
-												case "UP6":
-													Json.data[ 0 ].outlet_overrides.each(){
-														if( it.index != null && it.relay_state != null ){
-															if( it.index != 7 ){
-																if( it.relay_state ){
-																	PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "on" )
-																} else {
-																	PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "off" )
-																}
-															} else {
-																if( it.relay_state ){
-																	PostEventToChild( "${ data.DNI }", "USB Ports", "on" )
-																} else {
-																	PostEventToChild( "${ data.DNI }", "USB Ports", "off" )
-																}
-															}
-														}
-													}
-													break
-												case "USPPDUP":
-													Json.data[ 0 ].outlet_overrides.each(){
-														if( it.index != null && it.relay_state != null ){
-															if( it.index > 4 ){
-																if( it.relay_state ){
-																	PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "on" )
-																} else {
-																	PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "off" )
-																}
-															} else {
-																if( it.relay_state ){
-															        PostEventToChild( "${ data.DNI }", "USB Port ${ it.index }", "on" )
-																} else {
-																	PostEventToChild( "${ data.DNI }", "USB Port ${ it.index }", "off" )
-																}
-															}
-														}
-													}
-													break
-												default:
-													Json.data[ 0 ].outlet_overrides.each(){
-														if( it.index != null && it.relay_state != null ){
-															if( it.relay_state ){
-																PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "on" )
-															} else {
-																PostEventToChild( "${ data.DNI }", "Outlet ${ it.index }", "off" )
-															}
-														}
-													}
-													break
-											}
-											break
-                                        }
-                                    }
-                                } else {
-                                    Logging( "No data returned, no changes made on controller side.", 4 )
-                                }
-                            } else {
-                                Logging( "No data returned, no changes made on controller side.", 4 )
-                            }
-                        } else {
-                            Logging( "No data returned, no changes made on controller side.", 4 )
-                        }
-                    }
-                    break
                 case "SetRPSPortOnOff":
                 case "SetLEDOnOff":
                 case "SetLEDColor":
@@ -1180,20 +1000,6 @@ def ReceiveData( resp, data ){
 			break
         case 408:
             ProcessEvent( "Status", "Request timeout for ${ data.Method }" )
-            /*
-            switch( data.Method ){
-                case "PresenceCheck":
-                    Logging( "Request Timeout checking if ${ data.MAC } is present", 5 )
-                    break
-                case "MACExists":
-                    Logging( "Request Timeout checking if ${ data.MAC } exists", 5 )
-                    break
-                default:
-                    Logging( "Request Timeout for ${ data.Method }", 5 )
-			        break
-            }
-			break
-            */
 		default:
             ProcessEvent( "Status", "Error ${ resp.status } connecting for ${ data.Method }" )
 			Logging( "Error connecting to AqualinkD: ${ resp.status } for ${ data.Method }", 5 )
