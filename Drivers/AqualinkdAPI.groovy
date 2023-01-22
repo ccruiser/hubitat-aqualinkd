@@ -5,8 +5,8 @@
 * This Hubitat driver allows polling of the AqualinkD API
 *
 * Overall Setup:
-* 1) Add the AqualinkdAPI.groovy a
-* 2) Add a Virtual Device(s)  :: TODO Task
+* 1) Add the AqualinkdAPI.groovy 
+* 2) Set the varible options for the endpoint and devices (currently set to seven)
 *
 * Licensing:
 * Copyright 2023 Casey Cruise
@@ -16,7 +16,9 @@
 * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 * for the specific language governing permissions and limitations under the License.
 *
-* Known Issue(s):
+* Known Issue(s) & Gaps:
+* 1) Add Dynamic lists for aqualink buttons / inputs
+* 2) Add a Virtual Device(s)  :: TODO Task
 * 
 * Version Control:
 * 0.1.0 - Initial version based on logic from UnifiNetworkAPI
@@ -146,30 +148,37 @@ def DoSomething(){
                     setAlHwrVer = resp.data."${ AqualinkDHrdwVersion() }"
                     setAlDate = resp.data."${ AqualinkDDate()  }"
                     setAlTime = resp.data."${ AqualinkDTime() }"
+                    setBatteryStat = resp.data."${ AqualinkDBattery() }"
+
 
                     //Add to Device 
                     Logging( "AqualinkD Daemon Status set to "+setAlDaemonVer, 2 )
                     Logging( "AqualinkD date set to "+setAlDate, 2 )
                     Logging( "AqualinkD time set to "+setAlTime, 2 )
-                    Logging( "AqualinkD Hardware"+setAlHwrVer, 2 )
+                    Logging( "AqualinkD Hardware verison"+setAlHwrVer, 2 )
+                    Logging( "AqualinkD Battery"+setBatteryStat, 2 )
                     ProcessEvent( "AqualinkD Version", setAlDaemonVer )
                     ProcessState( "AqualinkD Version", setAlDaemonVer )
                     ProcessState( "AqualinkD Date", setAlDate )
                     ProcessState( "AqualinkD Time", setAlTime )
                     ProcessState( "AqualinkD Hardware", setAlHwrVer )
 
-
                     //Set Pool Specific Items
                      setAlTempUnit = resp.data."${ AqualinkDTempUnits() }"
+                     setPoolHeaterSetPoint = resp.data."${ AqualinkDPoolHtrSetPnt() }" 
+                     setSpaHeaterSetPoint = resp.data."${ AqualinkSpaHtrSetPnt() }" 
                      setFrzPrtStatus = resp.data."${ AqualinkDFrzProtectStatus() }" 
+                     setAirTemp = resp.data."${ AqualinkDTempAir() }" 
+                     setPoolTemp = resp.data."${ AqualinkDTempPool() }" 
+                     setSpaTemp = resp.data."${ AqualinkDTempSpa() }" 
+
                     Logging( "AqualinkD temp unit set to "+setAlTempUnit, 2 )
-                    Logging( "AqualinkD freeze prtct status set to "+setFrzPrtStatus, 2 )
-
-
-
-
-
- 
+                    Logging( "AqualinkD freeze prtct status "+setFrzPrtStatus, 2 )
+                    Logging( "AqualinkD pool heater set point to "+setPoolHeaterSetPoint, 2 )
+                    Logging( "AqualinkD spa heater set point to "+setSpaHeaterSetPoint, 2 )
+                    Logging( "AqualinkD air temp set to "+setAirTemp, 2 )
+                    Logging( "AqualinkD pool temp set to "+setPoolTemp, 2 )
+                    Logging( "AqualinkD spa temp set to "+setSpaTemp, 2 )
 
                    
                 } else {
@@ -267,8 +276,6 @@ def updated(){
     }
     Logging( "Refresh rate: ${ RefreshRate }", 4 )
     
-    
-    
     // Deal with SiteOverride before getting CurrentStats
     /*
     if( SiteOverride != null ){
@@ -277,8 +284,9 @@ def updated(){
         state.Site = "default"
     }
     */
+
     // Attempt to call status API
-    CallStatusAPI()
+    //CallStatusAPI()
      
     //RefreshAllClients()
     //RefreshUnifiDevices()
