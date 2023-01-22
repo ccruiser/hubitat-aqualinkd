@@ -91,7 +91,7 @@ metadata{
         
         // Commands
         command "DoSomething" // Does something for development/testing purposes, should be commented before publishing
-        command "LogCallStatusAPI" // Status API Call in to the controller to get a cookie for the session
+        command "CallStatusAPI" // Status API Call; WIP cookie and session setup
    
 		// Attributes for the driver itself
 		attribute "Driver Name", "string" // Identifies the driver being used for update purposes
@@ -327,7 +327,7 @@ def DailyCheck(){
     refresh()
 }
 
-//Call Status API for AqualinkD
+//Set Cookie for Inital API 
 def setCookie( resp ){
     def Cookie
     try{
@@ -335,8 +335,15 @@ def setCookie( resp ){
             //if( ( it.value.split( '=' )[ 0 ].toString() == "aqualink" ) || ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) )
             if (it.value.split( '=' )[ 0 ].toString() == "TOKEN" )
             {
-                Cookie = resp.getHeaders().'Set-Cookie'
-                ProcessState( "Cookie", Cookie )
+                if (resp.getHeaders().'Set-Cookie' != null)
+                {
+                    Cookie = resp.getHeaders().'Set-Cookie'
+                    ProcessState( "Cookie", Cookie )
+                }
+                else{
+                     Logging( " cookie not found response ${ it.value }", 4 )
+
+                }
             }
             else{
                 Logging( "no cookie found in  response ${ it.value }", 4 )
@@ -366,7 +373,7 @@ def CallStatusAPI(){
                                 body: "" ]        
     */
     Logging( "Status Params: ${ Params }", 4 )
-    asynchttpPost( "CallStatusAPI", Params )
+    //asynchttpPost( "ReceiveLogin", Params )
     try{
         httpPost( Params ){ resp ->
 	        switch( resp.getStatus() ){
@@ -374,7 +381,10 @@ def CallStatusAPI(){
                     Logging( "status response = ${ resp.data }", 4 )
                     ProcessEvent( "Status", "AqualinkD status successful" )
                     ProcessEvent( "Last Status", new Date() )
-                    setCookie(resp)
+                    
+                    //TODO get working if Cookie use
+                    //setCookie(resp)
+                    
                     // Resetting 1 minute refresh rate
                     def Second = ( new Date().format( "s" ) as int )
                     Second = ( (Second + 5) % 60 )
@@ -470,12 +480,17 @@ def RefreshAllClients(){
 
 // Gets the status output from aqualink
 def RefreshAqualinkGeneralData(){
+    //TODO :: Consider a Cookie or session check
+    asynchttpGet( "ReceiveData", GenerateAPIParams( "status" ), [ Method: "RefreshAqualinkGeneralData" ] )
+
+    /*
     if( ( state.Cookie != null ) ){
         asynchttpGet( "ReceiveData", GenerateAPIParams( "status" ), [ Method: "RefreshAqualinkGeneralData" ] )
         //asynchttpGet( "ReceiveData", GenerateNetworkParams( "api/stat/sites" ), [ Method: "CurrentStats" ] )
     } else {
         Logging( "No Cookie set...", 5 )
     }
+    */
 }
 
 
