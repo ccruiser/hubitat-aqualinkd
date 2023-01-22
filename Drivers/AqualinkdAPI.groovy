@@ -508,129 +508,38 @@ def SendChildSettings( String DNI, String ChildID, String Value ){
     def Attempt = "api/s/${ state.Site }/rest/device/"
     asynchttpPut( "ReceiveData", GenerateNetworkManageParams( "${ Attempt }", "${ ChildID }", "${ Value }" ), [ Method: "SendChildSettings", DNI: "${ DNI }", ChildID: "${ ChildID }", Value: "${ Value }" ] )
 }
+def GenerateAPIParams( String Path, String Data = null ){
+{
+    //TODO :: Future data null validation options
+    // Example --
+    //
+    //        Params = [ uri: "https://${ AqualinkdURL }:{ AqualinkdPort }/api/${ Path }", 
+    //                  ignoreSSLIssues: true, 
+    //                  requestContentType: "application/json", 
+    //                  contentType: "application/json", 
+    //                  headers: [ Host: "${ AqualinkdURL }", 
+    //                  Accept: "*/*", Cookie: "${ state.Cookie }" ], 
+    //                  data:"${ Data }" ]
+
+    if ( Data != null ) {
+            Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                    contentType: "application/json", 
+                                    headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], 
+                                    data:"${ Data }" ]       
+        }
+        else {
+            Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                    contentType: "application/json" ]
+
+        }
+        //Logging( "Parameters = ${ Params }", 4 )
+	    return Params
+}
 
 // Generate Network Params assembles the parameters to be sent to the controller rather than repeat so much of it
 def GenerateNetworkParams( String Path, String Data = null ){
-	def Params
-    //TODO :: Future data null validation options
-
-
-    if ( Data != null ) {
-        /*
-        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
-                                ignoreSSLIssues: true, 
-                                requestContentType: "application/json", 
-                                contentType: "application/json",
-                                , data:"${ Data }"  
-                                body: "" ]        
-        */
-        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
-                                contentType: "application/json", 
-                                headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], 
-                                data:"${ Data }" ]       
-    }
-    else {
-        Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
-                                contentType: "application/json" ]
-
-    }
-	//if( Controller == "Unifi Dream Machine (inc Pro)" ){
-    //    if( Data != null ){
-    //        Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
-    //    } else {
-    //        Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
-     //   }
-	//} else {
-     //   if( Data != null ){
-     //       Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
-      //  } else {
-      //      Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
-      //  }
-	//}
-
-    //Logging( "Parameters = ${ Params }", 4 )
-	return Params
-}
-
-// GenerateNetworkCommandParams assembles the parameters to be sent to the controller rather than repeat so much of it
-def GenerateNetworkCommandParams( String Path, String ChildID, String Data = null ){
-	def Params
-	if( Controller == "Unifi Dream Machine (inc Pro)" ){
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
-        }
-	} else {
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
-        }
-	}
-    Logging( "Parameters = ${ Params }", 4 )
-	return Params
-}
-
-// GenerateNetworkManageParams assembles the parameters to be sent to the controller rather than repeat so much of it
-def GenerateNetworkManageParams( String Path, String ChildID, String Data ){
-	def Params
-	if( Controller == "Unifi Dream Machine (inc Pro)" ){
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
-        }
-	}
-    Logging( "Parameters = ${ Params }", 4 )
-	return Params
-}
-
-// GenerateNetworkSettingParams assembles the parameters to be sent to the controller rather than repeat so much of it
-def GenerateNetworkSettingParams( String Path, String ChildID, String MAC, String Data ){
-	def Params
-	if( Controller == "Unifi Dream Machine (inc Pro)" ){
-        if( Data != null ){
-            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
-        } else {
-            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
-        }
-	}
-    Logging( "Parameters = ${ Params }", 4 )
-	return Params
-}
-
-// Run a command on the controller
-def RunDevMgrCommand( String Method, String MAC, String Data ){
-    if( PollingOK() ){
-        if( MAC != null ){
-            def Params
-            if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ AqualinkdURL }:443", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
-            } else {
-                Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ AqualinkdURL }:${ AqualinkdPort }", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
-            }
-            Logging( "${ Method } Params = ${ Params }", 4 )
-            try{
-                httpPost( Params ){ resp ->
-                    switch( resp.getStatus() ){
-                        case 200:
-                            ProcessEvent( "Status", "${ Method } ${ MAC }" )
-                            Logging( "${ Method } succeeded = ${ resp.data }", 4 )
-                            break
-                        default:
-                            Logging( "${ Method } received ${ resp.getStatus() }", 3 )
-                            break
-                    }
-                }
-            } catch( Exception e ){
-                Logging( "${ Method } failed due to ${ e }", 5 )
-            }
-        } else {
-            Logging( "No MAC address entered.", 3 )
-            ProcessEvent( "Status", "No MAC address entered." )
-        }
-    }
+    def Params = ""
+    return Params
 }
 
 // Handles receiving the data from various commands
@@ -1014,7 +923,7 @@ def ProcessData( String Device, data ){
     Logging( "${ Device } Data: ${ data }", 4 )
 }
 
-// Pings a specific IP address using the Hubitat not the Unifi
+// Pings a specific IP address using the Hubitat not the Aqualink
 def Ping( IP ){
     def TempVersion
     if( location.hub.firmwareVersionString != null ){
@@ -1098,6 +1007,9 @@ def ProcessEvent( Variable, Value, Unit = null ){
             sendEvent( name: "${ Variable }", value: Value, isStateChanged: true )
         }
     }
+    else {
+         Logging( "No change for Event: ${ Variable } = ${ Value }", 4 )
+    }
 }
 
 // Process data to check against current state value and then send an event if it has changed
@@ -1111,98 +1023,30 @@ def ProcessState( Variable, Value ){
 // Post data to child device
 def PostEventToChild( Child, Variable, Value, Unit = null ){
     if( "${ Child }" != null ){
-        log.info("Future update will add child items")
-        /*
+        log.info("Future update will add child items for "+Child)
         if( getChildDevice( "${ Child }" ) == null ){
             TempChild = Child.split( " " )
             def ChildType = ""
+            /*
             switch( TempChild[ 0 ] ){
                 case "Presence":
                     ChildType = "Presence"
-                    break
-                case "UP6":
-                    ChildType = "UP6"
-                    break
-                case "USPPDUP":
-                    ChildType = "USPPDUP"
-                    break
-                case "USMINI":
-                    ChildType = "USMINI"
-                    break
-                case "USF5P":
-                    ChildType = "USF5P"
-                    break
-                case "USW48PoE":
-                    ChildType = "USW48PoE"
-                    break
-                case "USW24PoE":
-                    ChildType = "USW24PoE"
-                    break
-                case "USW16PoE":
-                    ChildType = "USW16PoE"
-                    break
-                case "USW8PoE":
-                    ChildType = "USW8PoE"
-                    break
-                case "USW16LPoE":
-                    ChildType = "USW16LPoE"
-                    break
-                case "USW8PoE60":
-                    ChildType = "USW8PoE60"
-                    break
-                case "USW8LPoE":
-                    ChildType = "USW8LPoE"
-                    break
-                case "USW48":
-                    ChildType = "USW48"
-                    break
-                case "USW24":
-                    ChildType = "USW24"
-                    break
-                case "USW16":
-                    ChildType = "USW16"
-                    break
-                case "USW8":
-                    ChildType = "USW8"
-                    break
-                case "UHDIW":
-                    ChildType = "UHDIW"
-                    break
-                case "BasicAP":
-                    ChildType = "BasicAP"
-                    break
-                case "AP":
-                    ChildType = "AP"
-                    break
-                case "RPS":
-                    ChildType = "RPS"
-                    break
-                case "UDM":
-                    ChildType = "UDM"
-                    break
-                case "UDMP":
-                    ChildType = "UDMP"
-                    break
-                case "UDMPSE":
-                    ChildType = "UDMPSE"
-                    break
-                case "UP1":
-                case "Plug":
-                    ChildType = "Plug"
                     break
                 default:
                     ChildType = "Generic"
                     break
             }
-            addChild( "${ Child }", ChildType )
+            */
+            //addChild( "${ Child }", ChildType )
         }
+        // Add processing for children above (if needed)
         if( getChildDevice( "${ Child }" ) != null ){
             if( Unit != null ){
-                getChildDevice( "${ Child }" ).ProcessEvent( "${ Variable }", Value, "${ Unit }" )
-                //Logging( "${ Child } Event: ${ Variable } = ${ Value }${ Unit }", 4 )
+                //getChildDevice( "${ Child }" ).ProcessEvent( "${ Variable }", Value, "${ Unit }" )
+                Logging( "${ Child } Event: ${ Variable } = ${ Value }${ Unit }", 4 )
             } else {
-                getChildDevice( "${ Child }" ).ProcessEvent( "${ Variable }", Value )
-                //Logging( "${ Child } Event: ${ Variable } = ${ Value }", 4 )
+                //getChildDevice( "${ Child }" ).ProcessEvent( "${ Variable }", Value )
+                Logging( "${ Child } Event: ${ Variable } = ${ Value }", 4 )
             }
         } else {
             if( Unit != null ){
@@ -1211,7 +1055,6 @@ def PostEventToChild( Child, Variable, Value, Unit = null ){
                 Logging( "Failure to add ${ Child } and post ${ Variable }=${ Value }", 5 )
             }
         }
-        */
     } else {
         Logging( "Failure to add child because child name was null", 5 )
     }
@@ -1221,184 +1064,47 @@ def PostEventToChild( Child, Variable, Value, Unit = null ){
 def PostStateToChild( Child, Variable, Value ){
     if( "${ Child }" != null ){
        log.info("Future update will add child items")
-       /*
         if( getChildDevice( "${ Child }" ) == null ){
             TempChild = Child.split( " " )
             def ChildType = ""
+            /*
             switch( TempChild[ 0 ] ){
                 case "Presence":
                     ChildType = "Presence"
                     break
-                case "UP6":
-                    ChildType = "UP6"
-                    break
-                case "USPPDUP":
-                    ChildType = "USPPDUP"
-                    break
-                case "USMINI":
-                    ChildType = "USMINI"
-                    break
-                case "USF5P":
-                    ChildType = "USF5P"
-                    break
-                case "UHDIW":
-                    ChildType = "UHDIW"
-                    break
-                case "USW48PoE":
-                    ChildType = "USW48PoE"
-                    break
-                case "USW24PoE":
-                    ChildType = "USW24PoE"
-                    break
-                case "USW16PoE":
-                    ChildType = "USW16PoE"
-                    break
-                case "USW8PoE":
-                    ChildType = "USW8PoE"
-                    break
-                case "USW16LPoE":
-                    ChildType = "USW16LPoE"
-                    break
-                case "USW8PoE60":
-                    ChildType = "USW8PoE60"
-                    break
-                case "USW8LPoE":
-                    ChildType = "USW8LPoE"
-                    break
-                case "USW48":
-                    ChildType = "USW48"
-                    break
-                case "USW24":
-                    ChildType = "USW24"
-                    break
-                case "USW16":
-                    ChildType = "USW16"
-                    break
-                case "USW8":
-                    ChildType = "USW8"
-                    break
-                case "BasicAP":
-                    ChildType = "BasicAP"
-                    break
-                case "AP":
-                    ChildType = "AP"
-                    break
-                case "RPS":
-                    ChildType = "RPS"
-                    break
-                case "UDM":
-                    ChildType = "UDM"
-                    break
-                case "UDMP":
-                    ChildType = "UDMP"
-                    break
-                case "UDMPSE":
-                    ChildType = "UDMPSE"
-                    break
-                case "UP1":
                 case "Plug":
                     ChildType = "Plug"
                     break
                 default:
                     ChildType = "Generic"
                     break
+            */
             }
-            addChild( "${ Child }", ChildType )
+            //addChild( "${ Child }", ChildType )
         }
         if( getChildDevice( "${ Child }" ) != null ){
-            //Logging( "${ Child } State: ${ Variable } = ${ Value }", 4 )
-            getChildDevice( "${ Child }" ).ProcessState( "${ Variable }", Value )
+            Logging( "${ Child } State: ${ Variable } = ${ Value }", 4 )
+            //getChildDevice( "${ Child }" ).ProcessState( "${ Variable }", Value )
         } else {
             Logging( "Failure to add ${ Child } and post ${ Variable }=${ Value }", 5 )
         }
-        */
     } else {
         Logging( "Failure to add child because child name was null", 5 )
     }
 }
 
-// Adds a Aqualind Children
+// Adds a Aqualinkd Children
 // Based on @mircolino's method for child sensors
 def addChild( String DNI, String ChildType ){
     try{
         Logging( "addChild(${ DNI })", 3 )
-        log.info("Future update will add child items")
+        log.info("Future update will add child item type "+ChildType)
         /*
         if( UnifiChildren ){
             switch( ChildType ){
                 case "Presence":
                     addChildDevice( "UnifiNetworkChild-Presence", DNI, [ name: "${ DNI }" ] )
                     break
-                case "ClientCheck":
-                    addChildDevice( "UnifiNetworkChild-ClientCheck", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UP6":
-                    addChildDevice( "UnifiNetworkChild-UP6", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USPPDUP":
-                    addChildDevice( "UnifiNetworkChild-USPPDUP", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USMINI":
-                    addChildDevice( "UnifiNetworkChild-USMINI", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USF5P":
-                    addChildDevice( "UnifiNetworkChild-USF5P", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UHDIW":
-                    addChildDevice( "UnifiNetworkChild-UHDIW", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "BasicAP":
-                    addChildDevice( "UnifiNetworkChild-BasicAP", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "AP":
-                    addChildDevice( "UnifiNetworkChild-AP", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "RPS":
-                    addChildDevice( "UnifiNetworkChild-RPS", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UDM":
-                    addChildDevice( "UnifiNetworkChild-UDM", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UDMP":
-                    addChildDevice( "UnifiNetworkChild-UDMP", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UDMPSE":
-                    addChildDevice( "UnifiNetworkChild-UDMPSE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW48PoE":
-                    addChildDevice( "UnifiNetworkChild-USW48PoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW48":
-                    addChildDevice( "UnifiNetworkChild-USW48", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW24PoE":
-                    addChildDevice( "UnifiNetworkChild-USW24PoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW24":
-                    addChildDevice( "UnifiNetworkChild-USW24", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW16PoE":
-                    addChildDevice( "UnifiNetworkChild-USW16PoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW16LPoE":
-                    addChildDevice( "UnifiNetworkChild-USW16LPoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW16":
-                    addChildDevice( "UnifiNetworkChild-USW16", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW8PoE":
-                    addChildDevice( "UnifiNetworkChild-USW8PoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW8PoE60":
-                    addChildDevice( "UnifiNetworkChild-USW8PoE60", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW8LPoE":
-                    addChildDevice( "UnifiNetworkChild-USW8LPoE", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "USW8":
-                    addChildDevice( "UnifiNetworkChild-USW8", DNI, [ name: "${ DNI }" ] )
-                    break
-                case "UP1":
                 case "Plug":
                     addChildDevice( "UnifiNetworkChild-Plug", DNI, [ name: "${ DNI }" ] )
                     break
