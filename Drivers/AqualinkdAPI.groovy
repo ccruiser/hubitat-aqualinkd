@@ -155,8 +155,8 @@ def DoSomething(){
                     Logging( "AqualinkD Daemon Status set to "+setAlDaemonVer, 2 )
                     Logging( "AqualinkD date set to "+setAlDate, 2 )
                     Logging( "AqualinkD time set to "+setAlTime, 2 )
-                    Logging( "AqualinkD Hardware verison"+setAlHwrVer, 2 )
-                    Logging( "AqualinkD Battery"+setBatteryStat, 2 )
+                    Logging( "AqualinkD Hardware verison "+setAlHwrVer, 2 )
+                    Logging( "AqualinkD Battery "+setBatteryStat, 2 )
                     ProcessEvent( "AqualinkD Version", setAlDaemonVer )
                     ProcessState( "AqualinkD Version", setAlDaemonVer )
                     ProcessState( "AqualinkD Date", setAlDate )
@@ -166,14 +166,16 @@ def DoSomething(){
                     //Set Pool Specific Items
                      setAlTempUnit = resp.data."${ AqualinkDTempUnits() }"
                      setPoolHeaterSetPoint = resp.data."${ AqualinkDPoolHtrSetPnt() }" 
-                     setSpaHeaterSetPoint = resp.data."${ AqualinkSpaHtrSetPnt() }" 
+                     setSpaHeaterSetPoint = resp.data."${ AqualinkDSpaHtrSetPnt() }" 
                      setFrzPrtStatus = resp.data."${ AqualinkDFrzProtectStatus() }" 
+                     setFrzPrtSetPoint = resp.data."${ AqualinkDFrzProtectSetPnt() }" 
                      setAirTemp = resp.data."${ AqualinkDTempAir() }" 
                      setPoolTemp = resp.data."${ AqualinkDTempPool() }" 
                      setSpaTemp = resp.data."${ AqualinkDTempSpa() }" 
 
                     Logging( "AqualinkD temp unit set to "+setAlTempUnit, 2 )
-                    Logging( "AqualinkD freeze prtct status "+setFrzPrtStatus, 2 )
+                    Logging( "AqualinkD freeze protect status "+setFrzPrtStatus, 2 )
+                    Logging( "AqualinkD freeze protect set point to "+setFrzPrtSetPoint, 2 )
                     Logging( "AqualinkD pool heater set point to "+setPoolHeaterSetPoint, 2 )
                     Logging( "AqualinkD spa heater set point to "+setSpaHeaterSetPoint, 2 )
                     Logging( "AqualinkD air temp set to "+setAirTemp, 2 )
@@ -529,7 +531,7 @@ def GenerateNetworkParams( String Path, String Data = null ){
     }
     else {
         Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
-                                contentType: "application/json"
+                                contentType: "application/json" ]
 
     }
 	//if( Controller == "Unifi Dream Machine (inc Pro)" ){
