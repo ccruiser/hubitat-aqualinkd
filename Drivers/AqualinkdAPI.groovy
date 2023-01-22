@@ -480,7 +480,6 @@ def SendChildSettings( String DNI, String ChildID, String Value ){
     asynchttpPut( "ReceiveData", GenerateNetworkManageParams( "${ Attempt }", "${ ChildID }", "${ Value }" ), [ Method: "SendChildSettings", DNI: "${ DNI }", ChildID: "${ ChildID }", Value: "${ Value }" ] )
 }
 def GenerateAPIParams( String Path, String Data = null ){
-{
     //TODO :: Future data null validation options
     // Example --
     //
@@ -946,8 +945,9 @@ def PostStateToChild( Child, Variable, Value ){
                 default:
                     ChildType = "Generic"
                     break
-            */
+            
             }
+            */
             //addChild( "${ Child }", ChildType )
         }
         if( getChildDevice( "${ Child }" ) != null ){
