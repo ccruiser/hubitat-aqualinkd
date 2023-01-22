@@ -305,7 +305,7 @@ def refresh(){
         AqualinkdPort = "80"
         
     }
-    //CurrentStats()
+    RefreshAqualinkGeneralData()
     /*
     if( ShowAlarms ){
         CheckAlarms()
@@ -404,8 +404,8 @@ def PollingOK( Message = null ){
             ProcessEvent( "Status", "No Cookie, hit API." )
         }
     } else {
-        Logging( "Site unknown, run CurrentStats or fill the Override Site preference.", 5 )
-        ProcessEvent( "Status", "Site unknown, run CurrentStats or fill the Override Site preference." )
+        Logging( "Site unknown, run RefreshAqualinkGeneralData or fill the Override Site preference.", 5 )
+        ProcessEvent( "Status", "Site unknown, run RefreshAqualinkGeneralData or fill the Override Site preference." )
     }
     return OK
     */
@@ -462,10 +462,11 @@ def RefreshAllClients(){
     }
 }
 
-// Gets the statistics for the current sites
-def CurrentStats(){
+// Gets the status output from aqualink
+def RefreshAqualinkGeneralData(){
     if( ( state.Cookie != null ) ){
-        asynchttpGet( "ReceiveData", GenerateNetworkParams( "api/stat/sites" ), [ Method: "CurrentStats" ] )
+        asynchttpGet( "ReceiveData", GenerateAPIParams( "status" ), [ Method: "RefreshAqualinkGeneralData" ] )
+        //asynchttpGet( "ReceiveData", GenerateNetworkParams( "api/stat/sites" ), [ Method: "CurrentStats" ] )
     } else {
         Logging( "No Cookie set...", 5 )
     }
@@ -502,7 +503,7 @@ def GenerateAPIParams( String Path, String Data = null ){
                                     contentType: "application/json" ]
 
         }
-        //Logging( "Parameters = ${ Params }", 4 )
+        Logging( "Parameters = ${ Params }", 4 )
 	    return Params
 }
 
@@ -560,155 +561,6 @@ def ReceiveData( resp, data ){
                                         }
                                         ProcessData( "USW48PoE ${ it.mac }", it )
                                         break
-                                    case "US48": // Unifi 48 Port non-PoE Switch (USW48)
-                                        if( getChildDevice( "USW48 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW48 ${ it.mac }", "Device Type", "USW48" )
-                                        }
-                                        ProcessData( "USW48 ${ it.mac }", it )
-                                        break
-                                    case "USL24P250": // Unifi 24 Port 250W PoE Switch (USW24PoE)
-                                    case "USL24P": // Unifi 24 Port PoE Switch (USW24PoE)
-                                    case "US624P": // Unifi 24 Port Enterprise PoE Switch (USW24PoE)
-                                        if( getChildDevice( "USW24PoE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW24PoE ${ it.mac }", "Device Type", "USW24PoE" )
-                                        }
-                                        ProcessData( "USW24PoE ${ it.mac }", it )
-                                        break
-                                    case "US24": // Unifi 24 Port non-PoE Switch (USW24)
-                                    case "USL24": // Unifi 24 Port non-PoE Switch (USW24)
-                                        if( getChildDevice( "USW24 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW24 ${ it.mac }", "Device Type", "USW24" )
-                                        }
-                                        ProcessData( "USW24 ${ it.mac }", it )
-                                        break
-                                    case "US16P150": // Unifi 16 Port 150W PoE Switch (USW16PoE)
-                                        if( getChildDevice( "USW16PoE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW16PoE ${ it.mac }", "Device Type", "USW16PoE" )
-                                        }
-                                        ProcessData( "USW16PoE ${ it.mac }", it )
-                                        break
-                                    case "USL16LP": // Unifi 16 Port Lite PoE Switch (USW16LPoE)
-                                    case "USL16P": // Unifi 16 Port Lite PoE Switch (USW16LPoE)
-                                        if( getChildDevice( "USW16LPoE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW16LPoE ${ it.mac }", "Device Type", "USW16LPoE" )
-                                        }
-                                        ProcessData( "USW16LPoE ${ it.mac }", it )
-                                        break
-                                    case "US16": // Unifi 16 Port non-PoE Switch (USW16)
-                                    case "USL16": // Unifi 16 Port non-PoE Switch (USW16)
-                                        if( getChildDevice( "USW16 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW16 ${ it.mac }", "Device Type", "USW16" )
-                                        }
-                                        ProcessData( "USW16 ${ it.mac }", it )
-                                        break
-                                    case "US8P150": // Unifi 8 Port 150W PoE Switch (USW8PoE)
-                                        if( getChildDevice( "USW8PoE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW8PoE ${ it.mac }", "Device Type", "USW8PoE" )
-                                        }
-                                        ProcessData( "USW8PoE ${ it.mac }", it )
-                                        break
-                                    case "US8P60": // Unifi 8 Port 60W PoE Switch (USW8PoE)
-                                        if( getChildDevice( "USW8PoE60 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW8PoE60 ${ it.mac }", "Device Type", "USW8PoE60" )
-                                        }
-                                        ProcessData( "USW8PoE60 ${ it.mac }", it )
-                                        break
-                                    case "USL8LP": // Unifi Lite 8 Port PoE Switch (USW-Lite-8-PoE)
-                                        if( getChildDevice( "USW8LPoE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW8LPoE ${ it.mac }", "Device Type", "USW8LPoE" )
-                                        }
-                                        ProcessData( "USW8LPoE ${ it.mac }", it )
-                                        break
-                                    case "US8": // Unifi 8 Port non-PoE Switch (USW8)
-                                    case "USL8": // Unifi 8 Port non-PoE Switch (USW8)
-                                        if( getChildDevice( "USW8 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USW8 ${ it.mac }", "Device Type", "USW8" )
-                                        }
-                                        ProcessData( "USW8 ${ it.mac }", it )
-                                        break
-                                    case "UHDIW": // Unifi HD In Wall
-                                        if( getChildDevice( "UHDIW ${ it.mac }" ) == null ){
-                                            PostEventToChild( "UHDIW ${ it.mac }", "Device Type", "UHDIW" )
-                                        }
-                                        ProcessData( "UHDIW ${ it.mac }", it )
-                                        break
-                                    case "U7NHD": // Unifi Access Point nanoHD
-                                    case "UAP6MP": // Unifi Access Point 6 Pro
-                                    case "UALR6v2": // Unifi Access Point 6 LR
-                                    case "UAL6": // Unifi Access Point 6 Lite
-                                    case "U7P": // Unifi AC Pro
-                                    case "U7MP": // UAP-AC-M-Pro
-                                    case "U7PG2": // UAP-AC-Pro
-                                    case "U7LT": // UAP-AC-Lite
-                                    case "U7HD": // UAP-AC-HD
-                                    case "UCXG": // UAP-XG
-                                    case "BZ2LR": // Unifi AC-LR
-                                    case "U6M": // Unifi U6 Mesh
-                                        if( getChildDevice( "AP ${ it.mac }" ) == null ){
-                                            PostEventToChild( "AP ${ it.mac }", "Device Type", "AP" )
-                                        }
-                                        ProcessData( "AP ${ it.mac }", it )
-                                        break
-                                    case "U7MSH": // UAP-AC-M
-                                        if( getChildDevice( "BasicAP ${ it.mac }" ) == null ){
-                                            PostEventToChild( "BasicAP ${ it.mac }", "Device Type", "BasicAP" )
-                                        }
-                                        ProcessData( "BasicAP ${ it.mac }", it )
-                                        break
-                                    case "USPRPS": // Unifi Redundant Power System
-                                        if( getChildDevice( "RPS ${ it.mac }" ) == null ){
-                                            PostEventToChild( "RPS ${ it.mac }", "Device Type", "RPS" )
-                                        }
-                                        ProcessData( "RPS ${ it.mac }", it )
-                                        break
-                                    case "UDMPROSE": // Unifi Dream Machine Pro SE
-                                        if( getChildDevice( "UDMPSE ${ it.mac }" ) == null ){
-                                            PostEventToChild( "UDMPSE ${ it.mac }", "Device Type", "UDMPSE" )
-                                        }
-                                        ProcessData( "UDMPSE ${ it.mac }", it )
-                                        break
-                                    case "UDMPRO": // Unifi Dream Machine Pro
-                                        if( getChildDevice( "UDMP ${ it.mac }" ) == null ){
-                                            PostEventToChild( "UDMP ${ it.mac }", "Device Type", "UDMP" )
-                                        }
-                                        ProcessData( "UDMP ${ it.mac }", it )
-                                        break
-                                    case "UDM": // Unifi Dream Machine
-                                        if( getChildDevice( "UDM ${ it.mac }" ) == null ){
-                                            PostEventToChild( "UDM ${ it.mac }", "Device Type", "UDM" )
-                                        }
-                                        ProcessData( "UDM ${ it.mac }", it )
-                                        break
-                                    case "UP1": // Unifi Smart Plug
-                                        if( getChildDevice( "Plug ${ it.mac }" ) == null ){
-                                            PostEventToChild( "Plug ${ it.mac }", "Device Type", "Plug" )
-                                        }
-                                        ProcessData( "Plug ${ it.mac }", it )
-                                        break
-                                    case "UP6": // Unifi Power Strip
-                                        if( getChildDevice( "UP6 ${ it.mac }" ) == null ){
-                                            PostEventToChild( "UP6 ${ it.mac }", "Device Type", "UP6" )
-                                        }
-                                        ProcessData( "UP6 ${ it.mac }", it )
-                                        break
-                                    case "USPPDUP": // Unifi SmartPower Pro PDU
-                                        if( getChildDevice( "USPPDUP ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USPPDUP ${ it.mac }", "Device Type", "USPPDUP" )
-                                        }
-                                        ProcessData( "USPPDUP ${ it.mac }", it )
-                                        break
-                                    case "USMINI": // Unifi Switch Mini
-                                        if( getChildDevice( "USMINI ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USMINI ${ it.mac }", "Device Type", "USMINI" )
-                                        }
-                                        ProcessData( "USMINI ${ it.mac }", it )
-                                        break
-                                    case "USF5P": // Unifi Switch Flex
-                                        if( getChildDevice( "USF5P ${ it.mac }" ) == null ){
-                                            PostEventToChild( "USF5P ${ it.mac }", "Device Type", "USF5P" )
-                                        }
-                                        ProcessData( "USF5P ${ it.mac }", it )
-                                        break
                                     default:
                                         Logging( "Unidentified Unifi ${ it.model } Device = ${ it }", 3 )
                                         if( getChildDevice( "Generic ${ it.mac }" ) == null ){
@@ -722,7 +574,6 @@ def ReceiveData( resp, data ){
                     }
                     break
                 case "PresenceCheck":
-                case "CurrentStats":
                 case "PowerOutlet":
                 case "SendChildSettings":
                     if( UnifiChildren ){
