@@ -156,7 +156,7 @@ def DoSomething(){
                     Logging( "AqualinkD date set to "+setAlDate, 2 )
                     Logging( "AqualinkD time set to "+setAlTime, 2 )
                     Logging( "AqualinkD temp unit set to "+setAlTempUnit, 2 )
-                    Logging( "AqualinkD freeze prtct status set to "+AqualinkDFrzProtectStatus, 2 )
+                    Logging( "AqualinkD freeze prtct status set to "+setFrzPrtStatus, 2 )
 
 
  
