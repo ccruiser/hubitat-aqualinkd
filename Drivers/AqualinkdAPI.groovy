@@ -28,7 +28,7 @@
 
 // Returns the driver name
 def DriverName(){
-    return "UnifiNetworkAPI"
+    return "AqualinkdAPI"
 }
 
 // Returns the driver version
@@ -46,8 +46,8 @@ metadata{
         
         // Commands
         command "DoSomething" // Does something for development/testing purposes, should be commented before publishing
-        command "Login" // Logs in to the controller to get a cookie for the session
-        command "CurrentStats" // Statistics of the site including health information
+        command "LogCallStatusAPI" // Logs in to the controller to get a cookie for the session
+        //command "CurrentStats" // Statistics of the site including health information
         //command "CheckAlarms" // Checks for any alarms not archived
         //command "ArchiveAlarms" // Archives all alarms
         //command "StartSpeedtest" // Runs a speed test, but does not provide results in response, uncomment if you want to use it
@@ -129,7 +129,7 @@ metadata{
                 */
                 /*
                 if( Controller == "Other Unifi Controllers" ){
-				    input( type: "string", name: "ControllerPort", title: "<font color='FF0000'><b>Controller Port #</b></font>", defaultValue: "8443", required: true )
+				    input( type: "string", name: "AqualinkdPort", title: "<font color='FF0000'><b>Controller Port #</b></font>", defaultValue: "8443", required: true )
                 }
                 input( type: "string", name: "SiteOverride", title: "<b>Override Default Site</b>", defaultValue: null, required: false )
                 input( type: "bool", name: "ShowAlarms", title: "<b>Show Network Alarm Data?</b>", defaultValue: true )
@@ -147,7 +147,7 @@ metadata{
 
 // Just a command to be put fixes or other oddities during development
 def DoSomething(){
-    Logging( "Password = ${ Password }", 2 )
+    Logging( "Using Current Host ${ AqualinkdURL }", 2 )
 }
 
 // updated is called whenever device parameters are saved
@@ -164,9 +164,9 @@ def updated(){
         Controller = "Unifi Dream Machine (inc Pro)"
     }
     
-    if( ControllerPort == null ){
+    if( AqualinkdPort == null ){
         if( Controller == "Other Unifi Controllers" ){
-            ControllerPort = "8443"
+            AqualinkdPort = "8443"
         }
     }
     */
@@ -253,8 +253,8 @@ def updated(){
         state.Site = "default"
     }
     */
-    // Attempt to login
-    Login()
+    // Attempt to call status API
+    CallStatusAPI()
      
     //RefreshAllClients()
     //RefreshUnifiDevices()
@@ -292,7 +292,7 @@ def refresh(){
         AqualinkdPort = "80"
         
     }
-    CurrentStats()
+    //CurrentStats()
     /*
     if( ShowAlarms ){
         CheckAlarms()
@@ -305,40 +305,42 @@ def refresh(){
 def DailyCheck(){
     ProcessState( "Driver Name", "${ DriverName() }" )
     ProcessState( "Driver Version", "${ DriverVersion() }" )
-    //Login()
+    CallStatusAPI()
     pauseExecution( 5000 )
     //RefreshAllClients()
     //RefreshUnifiDevices()
     refresh()
 }
 
-//Log in to Unifi
-def Login(){
-    /*
+//Call Status API for AqualinkD
+def CallStatusAPI(){
+
     def Params
-    if( Controller == "Unifi Dream Machine (inc Pro)" ){
-        Params = [ uri: "https://${ UnifiURL }:443/api/auth/login", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", body: "{\"username\":\"${ Username }\",\"password\":\"${ Password }\",\"remember\":\"true\"}" ]
-    } else {
-        Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/api/login", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", body: "{\"username\":\"${ Username }\",\"password\":\"${ Password }\",\"remember\":\"true\"}" ]        
-    }
-    //Logging( "Login Params: ${ Params }", 4 )
-    //asynchttpPost( "ReceiveLogin", Params )
+    Params = [ uri: "http://${ AqualinkdURL }:${ AqualinkdPort }/api/status", 
+                                ignoreSSLIssues: true, 
+                                requestContentType: "application/json", 
+                                contentType: "application/json", 
+                                body: "" ]        
+    Logging( "Status Params: ${ Params }", 4 )
+    asynchttpPost( "ReceiveLogin", Params )
     try{
         httpPost( Params ){ resp ->
 	        switch( resp.getStatus() ){
 		        case 200:
-                    //Logging( "Login response = ${ resp.data }", 4 )
-                    ProcessEvent( "Status", "Login successful." )
-                    ProcessEvent( "Last Login", new Date() )
+                    Logging( "Login response = ${ resp.data }", 4 )
+                    ProcessEvent( "Status", "AqualinkD status successful" )
+                    ProcessEvent( "Last Status", new Date() )
                     def Cookie
+                    /*
                     resp.getHeaders().each{
                         if( ( it.value.split( '=' )[ 0 ].toString() == "unifises" ) || ( it.value.split( '=' )[ 0 ].toString() == "TOKEN" ) ){
                             Cookie = resp.getHeaders().'Set-Cookie'
-                            if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                                Cookie = Cookie.split( ";" )[ 0 ] + ";"
-                            } else {
-                                Cookie = Cookie.split( ";" )[ 0 ]
-                            }
+                            //if( Controller == "Unifi Dream Machine (inc Pro)" ){
+                            //    Cookie = Cookie.split( ";" )[ 0 ] + ";"
+                            //} else {
+                            //    Cookie = Cookie.split( ";" )[ 0 ]
+                            //}
+                            
                             ProcessState( "Cookie", Cookie )
                         } else {
                             def CSRF
@@ -355,7 +357,9 @@ def Login(){
                             }
                         }
                     }
+                    */
                     // Resetting Presence check and 1 minute refresh rate
+                    /*
                     def Second = ( new Date().format( "s" ) as int )
                     Second = ( (Second + 5) % 60 )
                     if( RefreshRate == "1 minute" ){ // Reschedule the refresh check if it is every minute
@@ -373,12 +377,13 @@ def Login(){
                             Logging( "Too many MAC addresses to check for presence regularly.", 5 )
                         }
                     }
+                    */
 			        break
                 case 408:
-                    Logging( "Request Timeout", 3 )
+                    Logging( "Request Timeout to host: "+AqualinkdURL+" on port "+AqualinkdPort, 3 )
 			        break
 		        default:
-			        Logging( "Error logging in to controller: ${ resp.status }", 4 )
+			        Logging( "Error requesting AqualinkD status: ${ resp.status }", 4 )
 			        break
 	        }
         }
@@ -461,7 +466,7 @@ def CurrentStats(){
     if( ( state.Cookie != null ) ){
         asynchttpGet( "ReceiveData", GenerateNetworkParams( "api/stat/sites" ), [ Method: "CurrentStats" ] )
     } else {
-        Logging( "No Cookie available for authentication, must Login", 5 )
+        Logging( "No Cookie set...", 5 )
     }
 }
 
@@ -482,61 +487,6 @@ def CurrentSites(){
 }
 
 
-
-
-// Checks for any current (not archived) alarms on the controller
-def CheckAlarms(){
-    if( PollingOK() ){
-        asynchttpGet( "ReceiveData", GenerateNetworkParams( "api/s/${ state.Site }/rest/alarm?archived=false" ), [ Method: "CheckAlarms" ] )
-    }
-}
-
-
-// Reboot the controller
-def Reboot( String Confirmation ){
-    if( PollingOK() ){
-        if( AdvancedCommands ){
-            if( Confirmation == "Reboot" ){
-                def Params
-                if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                    Params = [ uri: "https://${ UnifiURL }:443/api/system/reboot", ignoreSSLIssues: true, headers: [ Referer: "https://${ UnifiURL }/settings/advanced", Host: "${ UnifiURL }", Origin: "https://${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ] ]
-                } else {
-                    Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/api/system/reboot", ignoreSSLIssues: true, headers: [ Referer: "https://${ UnifiURL }/settings/advanced", Host: "${ UnifiURL }", Origin: "https://${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ] ]
-                }
-                Logging( "Reboot Params = ${ Params }", 4 )
-                try{
-                    httpPost( Params ){ resp ->
-                        switch( resp.getStatus() ){
-		                    case 200:
-                            case 204:
-                                ProcessEvent( "Status", "Reboot command sent" )
-                                Logging( "Reboot command sent = ${ resp.data }", 4 )
-                                break
-                            default:
-                                Logging( "Reboot command error ${ resp.getStatus() }", 3 )
-                                break
-                        }
-                    }
-                } catch( Exception e ){
-                    Logging( "Reboot failed due to ${ e }", 5 )
-                }
-            } else {
-                Logging( "Reboot confirmation incorrect. Reboot command ignored.", 5 )
-                ProcessEvent( "Status", "Reboot confirmation incorrect. Reboot command ignored." )
-            }
-        } else {
-            Logging( "Advanced Commands disabled. Reboot command ignored.", 2 )
-            ProcessEvent( "Status", "Advanced Commands disabled. Reboot command ignored." )
-        }
-    }
-}
-
-
-
-
-
-
-
 // Configure child device settings based on Preferences
 def SendChildSettings( String DNI, String ChildID, String Value ){
     def Attempt = "api/s/${ state.Site }/rest/device/"
@@ -548,15 +498,15 @@ def GenerateNetworkParams( String Path, String Data = null ){
 	def Params
 	if( Controller == "Unifi Dream Machine (inc Pro)" ){
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
         }
 	} else {
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ], data:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }" ] ]
         }
 	}
     //Logging( "Parameters = ${ Params }", 4 )
@@ -568,15 +518,15 @@ def GenerateNetworkCommandParams( String Path, String ChildID, String Data = nul
 	def Params
 	if( Controller == "Unifi Dream Machine (inc Pro)" ){
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
         }
 	} else {
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ UnifiURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/${ ChildID }/general", Origin: "https://${ AqualinkdURL }", Accept: "*/*", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
         }
 	}
     Logging( "Parameters = ${ Params }", 4 )
@@ -588,9 +538,9 @@ def GenerateNetworkManageParams( String Path, String ChildID, String Data ){
 	def Params
 	if( Controller == "Unifi Dream Machine (inc Pro)" ){
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ ChildID }/device", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
         }
 	}
     Logging( "Parameters = ${ Params }", 4 )
@@ -602,9 +552,9 @@ def GenerateNetworkSettingParams( String Path, String ChildID, String MAC, Strin
 	def Params
 	if( Controller == "Unifi Dream Machine (inc Pro)" ){
         if( Data != null ){
-            Params = [ uri: "https://${ UnifiURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
+            Params = [ uri: "https://${ AqualinkdURL }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ], body:"${ Data }" ]
         } else {
-            Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ UnifiURL }", Referer: "https://${ UnifiURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ UnifiURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
+            Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/proxy/network/${ Path }/${ ChildID }", ignoreSSLIssues: true, requestContentType: "application/json", contentType: "application/json", headers: [ Host: "${ AqualinkdURL }", Referer: "https://${ AqualinkdURL }/network/${ state.Site }/devices/properties/${ MAC }/settings", Origin: "https://${ AqualinkdURL }", Cookie: "${ state.Cookie }", 'X-CSRF-Token': "${ state.CSRF }" ] ]
         }
 	}
     Logging( "Parameters = ${ Params }", 4 )
@@ -617,9 +567,9 @@ def RunDevMgrCommand( String Method, String MAC, String Data ){
         if( MAC != null ){
             def Params
             if( Controller == "Unifi Dream Machine (inc Pro)" ){
-                Params = [ uri: "https://${ UnifiURL }:443/proxy/network/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ UnifiURL }:443", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
+                Params = [ uri: "https://${ AqualinkdURL }:443/proxy/network/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ AqualinkdURL }:443", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
             } else {
-                Params = [ uri: "https://${ UnifiURL }:${ ControllerPort }/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ UnifiURL }:${ ControllerPort }", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
+                Params = [ uri: "https://${ AqualinkdURL }:${ AqualinkdPort }/api/s/${ state.Site }/cmd/devmgr", ignoreSSLIssues: true, headers: [ Host: "${ AqualinkdURL }:${ AqualinkdPort }", Accept: "*/*", Cookie: "${ state.Cookie }", "X-CSRF-Token": "${ state.CSRF }" ], body: "${ Data }" ]
             }
             Logging( "${ Method } Params = ${ Params }", 4 )
             try{
@@ -1207,8 +1157,8 @@ def ReceiveData( resp, data ){
             }
             break
         case 401:
-            ProcessEvent( "Status", "${ data.Method } Unauthorized, please Login again" )
-            Logging( "Unauthorized for ${ data.Method } please Login again", 5 )
+            ProcessEvent( "Status", "${ data.Method } Unauthorized, please validate connection" )
+            Logging( "Unauthorized for ${ data.Method } please validate connection", 5 )
 			break
         case 404:
             ProcessEvent( "Status", "${ data.Method } Page not found error" )
@@ -1232,7 +1182,7 @@ def ReceiveData( resp, data ){
             */
 		default:
             ProcessEvent( "Status", "Error ${ resp.status } connecting for ${ data.Method }" )
-			Logging( "Error connecting to Unifi Controller: ${ resp.status } for ${ data.Method }", 5 )
+			Logging( "Error connecting to AqualinkD: ${ resp.status } for ${ data.Method }", 5 )
 			break
 	}
 }
